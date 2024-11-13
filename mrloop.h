@@ -1,5 +1,7 @@
 
 #pragma once
+#ifndef MRLOOP_H
+#define MRLOOP_H
 
 #include "liburing.h"
 
@@ -114,3 +116,4 @@ void mr_call_soon(  mr_loop_t *loop, mr_timer_cb *cb, void *user_data );
 #ifdef __cplusplus
 }
 #endif
+#endif /* MRLOOP_H */
