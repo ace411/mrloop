@@ -38,7 +38,7 @@ mr_loop_t *mr_create_loop(mr_signal_cb *sig) {
     printf("Loop creation failed\n");
     return NULL;
   }
-  // Timer 
+  // Timer
   loop->timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
   if (loop->timer_fd < 0) { perror("timerfd_create"); return NULL; }
   loop->thead = NULL;
@@ -71,7 +71,7 @@ void mr_free(mr_loop_t *loop) {
     free(loop->read_data_events[i]);
   }
 
-  free(loop); 
+  free(loop);
 }
 
 void mr_stop(mr_loop_t *loop) {
@@ -99,7 +99,7 @@ void mr_add_write_callback( mr_loop_t *loop, mr_write_cb *cb, void *conn, int fd
   io_uring_prep_poll_add( sqe, fd, POLLOUT );
   sqe->user_data = (unsigned long)ev;
   io_uring_submit(loop->ring);
-  
+
 }
 void mr_add_read_callback( mr_loop_t *loop, mr_write_cb *cb, void *conn, int fd ) {
 
@@ -113,7 +113,7 @@ void mr_add_read_callback( mr_loop_t *loop, mr_write_cb *cb, void *conn, int fd 
   io_uring_prep_poll_add( sqe, fd, POLLIN );
   sqe->user_data = (unsigned long)ev;
   io_uring_submit(loop->ring);
-  
+
 }
 
 void _addTimer( mr_loop_t *loop, mr_event_t *ev ) {
@@ -134,7 +134,7 @@ void _read( mr_loop_t *loop, mr_event_t *ev ) {
   io_uring_prep_readv(sqe, rdev->fd, &(rdev->iov), 1, 0);
   sqe->user_data = (unsigned long)rdev;
 
-  io_uring_submit(loop->ring); 
+  io_uring_submit(loop->ring);
 
 }
 
@@ -216,21 +216,21 @@ static void *mr_set_timeout( mr_loop_t *loop, struct __kernel_timespec *ts ) {
     ts->tv_nsec = (ms + 1000) * 1e6;
   }
   else ts->tv_nsec = ms * 1e6;
- 
+
   return te;
 }
 
 
 void mr_run( mr_loop_t *loop ) {
   struct io_uring_cqe *cqe;
-  
+
   while ( 1 ) {
 
     if ( loop->stop ) return;
 
     // Check for waiting time events
     if ( loop->thead ) {
-      struct __kernel_timespec ts; 
+      struct __kernel_timespec ts;
 
       // This processes any time events that have triggered and returns non zero if we have to wait
       if ( mr_set_timeout( loop, &ts ) ) {
@@ -248,13 +248,13 @@ void mr_run( mr_loop_t *loop ) {
       mr_process_time_event( loop );
       if ( loop->stop ) return;
       io_uring_cqe_seen(loop->ring, cqe);
-      continue; 
+      continue;
     }
 
     mr_event_t *ev = (mr_event_t*)cqe->user_data;
     if ( !ev ) {
       io_uring_cqe_seen(loop->ring, cqe);
-      continue; 
+      continue;
     }
 
     if ( ev->type == TIMER_EV ) {
@@ -279,7 +279,7 @@ void mr_run( mr_loop_t *loop ) {
     if ( ev->type == READ_DATA_EV ) {
 
         int rc = ev->rcb( ev->user_data, ev->fd, cqe->res, ev->iov.iov_base );
-        if ( rc ) { 
+        if ( rc ) {
           mr_close( loop, ev->fd );
         } else {
           if ( loop->stop ) return;
@@ -328,18 +328,18 @@ int mr_add_timer( mr_loop_t *loop, double seconds, mr_timer_cb *cb, void *user_d
   int tfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
   if (tfd < 0) { perror("timerfd_create"); return -1; }
   if (timerfd_settime(tfd, 0, &exp, NULL)) { perror("timerfd_settime"); close(tfd); return -1; }
-  
+
   mr_event_t *ev = malloc( sizeof(mr_event_t) );
   ev->type = TIMER_EV;
   ev->fd = tfd;
   ev->tcb = cb;
-  ev->user_data = user_data;  
+  ev->user_data = user_data;
 
   _addTimer(loop, ev);
   return 0;
 }
 
-int mr_tcp_server( mr_loop_t *loop, int port, mr_accept_cb *cb, mr_read_cb *rcb) { //, char *buf, int buflen ) {
+int mr_tcp_server( mr_loop_t *loop, int port, size_t max_conn, mr_accept_cb *cb, mr_read_cb *rcb) { //, char *buf, int buflen ) {
   int listen_fd;
   struct sockaddr_in servaddr;
   int flags = 1;
@@ -364,7 +364,7 @@ int mr_tcp_server( mr_loop_t *loop, int port, mr_accept_cb *cb, mr_read_cb *rcb)
       exit(EXIT_FAILURE);
   }
 
-  if (listen(listen_fd, 32) == -1) {
+  if (listen(listen_fd, max_conn) == -1) {
       printf("listen error : %d %s...\n", errno, strerror(errno));
       exit(EXIT_FAILURE);
   }
@@ -436,7 +436,7 @@ void mr_close( mr_loop_t *loop, int fd ) {
 }
 
 void mr_flush( mr_loop_t *loop ) {
-  io_uring_submit(loop->ring); 
+  io_uring_submit(loop->ring);
   num_sqes = 0;
 }
 
@@ -455,7 +455,7 @@ void mr_writevf( mr_loop_t *loop, int fd, struct iovec *iovs, int cnt ) {
   struct io_uring_sqe *sqe = io_uring_get_sqe(loop->ring);
   io_uring_prep_writev(sqe, fd, iovs, cnt, 0);
   sqe->user_data = 0;
-  io_uring_submit(loop->ring); 
+  io_uring_submit(loop->ring);
   num_sqes = 0;
 
 }
@@ -498,7 +498,7 @@ void mr_write( mr_loop_t *loop, int fd, const void *buf, unsigned nbytes, off_t 
   struct io_uring_sqe *sqe = io_uring_get_sqe(loop->ring);
   io_uring_prep_write_fixed(sqe, fd, buf, nbytes, offset, 0);
   sqe->user_data = 0;
-  io_uring_submit(loop->ring); 
+  io_uring_submit(loop->ring);
   num_sqes = 0;
 
 }
@@ -516,7 +516,7 @@ static void mr_insert_time_event( mr_loop_t *loop, mr_time_event_t *te ) {
       te->next = n;
       if ( p ) p->next = te;
       else loop->thead = te;
-      return;       
+      return;
     }
     p = n;
     n = n->next;
@@ -541,7 +541,7 @@ void mr_call_after( mr_loop_t *loop, mr_timer_cb *func, uint64_t milliseconds, v
   }
 
   // Insert it into the LL in time order
-  mr_insert_time_event( loop, te );    
+  mr_insert_time_event( loop, te );
 
 }
 
@@ -559,7 +559,7 @@ void mr_call_soon( mr_loop_t *loop, mr_timer_cb *cb, void *user_data ) {
   te->sec = 0;
   te->ms  = 0;
 
-  mr_insert_time_event( loop, te );    
+  mr_insert_time_event( loop, te );
 
 }
 

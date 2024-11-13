@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 #include <netinet/in.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -48,7 +48,7 @@ typedef struct mr_time_event {
   uint64_t ms;
   struct mr_time_event *prev;
   struct mr_time_event *next;
-  mr_timer_cb *cb;  
+  mr_timer_cb *cb;
   void *user_data;
 } mr_time_event_t;
 
@@ -72,8 +72,8 @@ typedef struct mr_event_s {
   int type;
   int fd;
   // TODO union?
-  mr_timer_cb *tcb;  
-  mr_accept_cb *acb;  
+  mr_timer_cb *tcb;
+  mr_accept_cb *acb;
   mr_read_cb *rcb;
   mr_write_cb *wcb;
   mr_done_cb *dcb;
@@ -93,7 +93,7 @@ void mr_add_write_callback( mr_loop_t *loop, mr_write_cb *cb, void *conn, int fd
 void mr_add_read_callback ( mr_loop_t *loop, mr_write_cb *cb, void *conn, int fd );
 
 int  mr_add_timer( mr_loop_t *loop, double seconds, mr_timer_cb *cb, void *user_data );
-int  mr_tcp_server( mr_loop_t *loop, int port, mr_accept_cb *cb, mr_read_cb *rcb);//, char *buf, int buflen );
+int  mr_tcp_server( mr_loop_t *loop, int port, size_t max_conn, mr_accept_cb *cb, mr_read_cb *rcb);//, char *buf, int buflen );
 int  mr_connect( mr_loop_t *loop, const char *addr, int port, mr_read_cb *rcb);
 void mr_close(mr_loop_t *loop, int fd);
 
