@@ -6,6 +6,7 @@
 #include "mrloop.h"
 
 #define BUFSIZE 64*1024
+#define MAXCONN 32
 
 typedef struct _conn
 {
@@ -26,9 +27,9 @@ void *setup_conn(int fd, char **buf, int *buflen ) {
 
 int on_data(void *conn, int fd, ssize_t nread, char *buf) {
   conn_t *c = conn;
-  
+
   // The client closed the connection
-  if ( nread == 0 ) { 
+  if ( nread == 0 ) {
     mr_close( loop, c->fd );
     free(c);
     return 1;
@@ -49,7 +50,7 @@ static void sig_handler(const int sig) {
 int main() {
 
   loop = mr_create_loop(sig_handler);
-  mr_tcp_server( loop, 12345, setup_conn, on_data );
+  mr_tcp_server( loop, 12345, MAXCONN, setup_conn, on_data );
   mr_run(loop);
   mr_free(loop);
 
